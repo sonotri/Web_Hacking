@@ -19,14 +19,14 @@ def index():
 
     cur = mysql.connection.cursor()
     
-    # 검색 조건에 따라 SQL 쿼리 변경
+    #검색 조건 설정하는 부분
     if search_type == 'title':
-        cur.execute("SELECT * FROM topics WHERE title LIKE %s", ('%' + search_query + '%',))
+        cur.execute(f"SELECT * FROM topics WHERE title LIKE '%{search_query}%'")
     elif search_type == 'body':
-        cur.execute("SELECT * FROM topics WHERE body LIKE %s", ('%' + search_query + '%',))
+        cur.execute(f"SELECT * FROM topics WHERE body LIKE '%{search_query}%'")
     elif search_type == 'all':
-        cur.execute("SELECT * FROM topics WHERE title LIKE %s OR body LIKE %s", 
-                    ('%' + search_query + '%', '%' + search_query + '%'))
+        cur.execute(f"SELECT * FROM topics WHERE title LIKE '%{search_query}%' OR body LIKE '%{search_query}%'")
+
     else:
         cur.execute("SELECT * FROM topics")
         

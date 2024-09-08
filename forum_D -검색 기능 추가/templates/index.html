@@ -5,14 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulletin Board</title>
+    <!--CSS 불러오는 부분-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <header>
-        <h1>Bulletin Board</h1>
+        <h1>Hyeonjin's Board</h1>
     </header>
     <main>
-        <!-- 검색 폼 -->
+        <!-- 검색 폼 부분-->
         <form action="{{ url_for('index') }}" method="POST" id="search-form">
             <select name="search_type">
                 <option value="all" {% if search_type == 'all' %}selected{% endif %}>전체 검색</option>
@@ -23,15 +25,15 @@
             <button type="submit">Search</button>
         </form>
 
-        <!-- 게시물 목록을 출력하는 섹션 -->
+        <!-- Posts 부분-->
         <section id="posts">
             <h2>Posts</h2>
             <div id="post-list">
                 <!-- Flask에서 받은 posts 데이터를 반복하여 출력 -->
                 {% for post in posts %}
                 <div class="post-item">
-                    <div class="post-title">{{ post[1] }}</div> <!-- post[1]은 title -->
-                    <div class="post-content">{{ post[2] }}</div> <!-- post[2]은 body -->
+                    <div class="post-title">{{ post[1] }}</div> <!-- post[1] = title -->
+                    <div class="post-content">{{ post[2] }}</div> <!-- post[2] = body -->
                     <!-- 삭제 버튼 -->
                     <form action="{{ url_for('delete_post', id=post[0]) }}" method="POST" style="display: inline;">
                         <button type="submit" class="delete-button">Delete</button>
@@ -43,7 +45,7 @@
             </div>
         </section>
 
-        <!-- 새 게시물을 작성하는 섹션 -->
+        <!--  New Post 부분 -->
         <section id="new-post">
             <h2>New Post</h2>
             <form id="post-form" action="{{ url_for('add_post') }}" method="POST">
