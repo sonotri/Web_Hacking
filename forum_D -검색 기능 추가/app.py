@@ -34,7 +34,7 @@ def index():
     cur.close()
     return render_template('index.html', posts=posts, search_query=search_query, search_type=search_type)
 
-# Route to add a new post
+# 새로운 게시글 추가하는 부분(D)
 @app.route('/add', methods=['POST'])
 def add_post():
     title = request.form['title']
@@ -46,7 +46,7 @@ def add_post():
     flash('Post added successfully!')
     return redirect(url_for('index'))
 
-# Route to delete a post
+# 게시글 삭제하는 부분(D)
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete_post(id):
     cur = mysql.connection.cursor()
@@ -56,7 +56,7 @@ def delete_post(id):
     flash('Post deleted successfully!')
     return redirect(url_for('index'))
 
-# Route to show the edit form for a post
+# 수정 부분
 @app.route('/edit/<int:id>', methods=['GET'])
 def edit_post(id):
     cur = mysql.connection.cursor()
@@ -65,7 +65,7 @@ def edit_post(id):
     cur.close()
     return render_template('edit.html', post=post)
 
-# Route to update the post
+# 업데이트 부분(U)
 @app.route('/update/<int:id>', methods=['POST'])
 def update_post(id):
     title = request.form['title']
