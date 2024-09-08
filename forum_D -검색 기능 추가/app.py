@@ -4,15 +4,14 @@ from flask_mysqldb import MySQL
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# MySQL Configuration
+# MySQL 연동하는 부분
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'  # MySQL 유저명
-app.config['MYSQL_PASSWORD'] = 'ahj740429^^'  # MySQL 비밀번호
+app.config['MYSQL_USER'] = 'root'  
+app.config['MYSQL_PASSWORD'] = 'ahj740429^^' 
 app.config['MYSQL_DB'] = 'forum'
-
 mysql = MySQL(app)
 
-# Home route to display posts with optional search
+# /를 입력했을 때, 즉 기본 페이지 부분
 @app.route('/', methods=['GET', 'POST'])
 def index():
     search_type = request.form.get('search_type', 'all')
