@@ -25,9 +25,9 @@
             <button type="submit">Search</button>
         </form>
 
-        <!-- Posts 부분-->
+        <!-- 게시판 부분-->
         <section id="posts">
-            <h2>Posts</h2>
+            <h2>게시판</h2>
             <div id="post-list">
                 <!-- Flask에서 받은 posts 데이터를 반복하여 출력 -->
                 {% for post in posts %}
@@ -36,22 +36,22 @@
                     <div class="post-content">{{ post[2] }}</div> <!-- post[2] = body -->
                     <!-- 삭제 버튼 -->
                     <form action="{{ url_for('delete_post', id=post[0]) }}" method="POST" style="display: inline;">
-                        <button type="submit" class="delete-button">Delete</button>
+                        <button type="submit" class="delete-button">삭제</button>
                     </form>
                     <!-- 수정 버튼 -->
-                    <a href="{{ url_for('edit_post', id=post[0]) }}" class="edit-button">Edit</a>
+                    <a href="{{ url_for('edit_post', id=post[0]) }}" class="edit-button">수정하기</a>
                 </div>
                 {% endfor %}
             </div>
         </section>
 
-        <!--  New Post 부분 -->
+        <!--  새로운 게시글 작성 부분 -->
         <section id="new-post">
-            <h2>New Post</h2>
+            <h2>새로운 게시글 작성</h2>
             <form id="post-form" action="{{ url_for('add_post') }}" method="POST">
-                <input type="text" id="title" name="title" placeholder="Title" required>
-                <textarea id="content" name="body" placeholder="Write your post..." required></textarea>
-                <button type="submit">Submit</button>
+                <input type="text" id="title" name="title" placeholder="제목" required>
+                <textarea id="content" name="body" placeholder="여기에 입력..." required></textarea>
+                <button type="submit">제출</button>
             </form>
         </section>
     </main>
