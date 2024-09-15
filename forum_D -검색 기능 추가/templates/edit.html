@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Post</title>
+    <title>글 수정하기</title>
+    <!-- CSS 파일 링크 추가 -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='styles.css') }}"
     />
   </head>
   <body>
-    <header>
-      <h1>Edit Post</h1>
-    </header>
-    <main>
-      <!-- 수정 부분 -->
-      <form action="{{ url_for('update_post', id=post[0]) }}" method="POST">
-        <input type="text" name="title" value="{{ post[1] }}" required />
-        <textarea name="body" required>{{ post[2] }}</textarea>
-        <button type="submit">Update</button>
-      </form>
-      <a href="{{ url_for('index') }}">Back to Home</a>
-    </main>
+    <h1>글 수정하기</h1>
+    <form method="POST">
+      <label for="title">제목:</label>
+      <input type="text" name="title" value="{{ post.title }}" required />
+
+      <label for="body">내용:</label>
+      <textarea name="body" required>{{ post.body }}</textarea>
+
+      <button type="submit">수정 완료</button>
+    </form>
+    <a href="{{ url_for('index') }}">목록으로 돌아가기</a>
   </body>
 </html>
