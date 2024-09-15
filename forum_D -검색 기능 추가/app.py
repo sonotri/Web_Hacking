@@ -19,17 +19,61 @@ mysql = MySQL(app)
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# 허용된 파일 확장자 확인(허용된 확장자를 가지는 파일만 업로드 가능)
+# 허용된 파일 확장자 확인
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt', 'docx'}
 
-# 인덱스 라우트 및 검색 기능
-@app.route('/', methods=['GET', 'POST'])
+# 인덱스 라우트는 로그인 화면으로 리디렉션
+@app.route('/')
+def home():
+    return redirect(url_for('login'))
+
+# 로그인 라우트
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user_id = request.form['user_id']
+        password = request.form['password']
+        cur = mysql.connection.cursor()
+        try:
+            cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+            user = cur.fetchone()
+            print("Fetched user:", user) 
+        except Exception as e:
+            print("Error fetching user:", e)  
+            flash("오류 발생: 로그인 중 문제가 생겼습니다.")
+            return redirect(url_for('login'))
+        finally:
+            cur.close()
+        
+        if user and check_password_hash(user[2], password):  
+            session['user_id'] = user[0]  
+            session['name'] = user[1]  
+            session['school'] = user[3]  
+            flash('로그인 성공!')
+            return redirect(url_for('index'))  # 로그인 성공 시 게시판 화면으로 이동
+        else:
+            flash('아이디 또는 비밀번호가 틀렸습니다.')
+    return render_template('login.html')
+
+# 로그아웃 라우트
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    flash('로그아웃되었습니다.')
+    return redirect(url_for('login'))
+
+# 게시판 화면
+@app.route('/index', methods=['GET', 'POST'])
 def index():
+    if 'user_id' not in session:
+        flash('로그인이 필요합니다.')
+        return redirect(url_for('login'))
+    
     search_type = request.form.get('search_type', 'all')
     search_query = request.form.get('search_query', '')
-    posts = []  # 초기화하여 빈 리스트로 설정
-    
+    posts = []
+
     cur = mysql.connection.cursor()
     try:
         if search_type == 'title':
@@ -47,186 +91,31 @@ def index():
 
     return render_template('index.html', posts=posts)
 
-# 새 글 작성 라우트
-@app.route('/add', methods=['GET', 'POST'])
-def add_post():
-    if request.method == 'POST':
-        title = request.form['title']
-        body = request.form['body']
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO topics (title, body) VALUES (%s, %s)", (title, body))
-        mysql.connection.commit()
-        cur.close()
-        flash('새 글이 추가되었습니다!')
-        return redirect(url_for('index'))
-    return render_template('add.html')
-
-# 회원가입 라우트
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        user_id = request.form['user_id']
-        password = request.form['password']
-        name = request.form['name']
-        school = request.form['school']
-
-        # 사용자 등록
-        try:
-            cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO users (user_id, password, name, school) VALUES (%s, %s, %s, %s)", 
-                        (user_id, password, name, school))
-            mysql.connection.commit()
-            flash('회원가입이 완료되었습니다!')
-            return redirect(url_for('login'))
-        except Exception as e:
-            flash(f"오류 발생: {str(e)}")
-        finally:
-            cur.close()
-    return render_template('회원가입.html')
-
-# 로그인 라우트
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        user_id = request.form['user_id']
-        password = request.form['password']
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE user_id = %s AND password = %s", (user_id, password))
-        user = cur.fetchone()
-        cur.close()
-        if user:
-            session['user_id'] = user['user_id']
-            flash('로그인 성공!')
-            return redirect(url_for('index'))
-        else:
-            flash('아이디 또는 비밀번호가 틀렸습니다.')
-    return render_template('login.html')
-
-# 로그아웃 라우트
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    flash('로그아웃되었습니다.')
-    return redirect(url_for('index'))
-
-# 내 프로필 수정 라우트
+# 내 프로필 보기 라우트
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         flash('로그인이 필요합니다.')
         return redirect(url_for('login'))
 
-    user_id = session['user_id']
+    user = {
+        'user_id': session.get('user_id'),
+        'name': session.get('name'),
+        'school': session.get('school')
+    }
+
     cur = mysql.connection.cursor()
-    try:
-        if request.method == 'POST':
-            name = request.form['name']
-            school = request.form['school']
-            cur.execute("UPDATE users SET name = %s, school = %s WHERE user_id = %s", (name, school, user_id))
-            mysql.connection.commit()
-            flash('프로필이 수정되었습니다.')
-        
-        cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
-        user = cur.fetchone()
-        if not user:
-            flash('사용자 정보를 찾을 수 없습니다.')
-            return redirect(url_for('index'))
-    except Exception as e:
-        flash(f"오류 발생: {str(e)}")
-    finally:
-        cur.close()
-    
-    return render_template('profile.html', user=user)
-
-
-# 다른 회원 프로필 보기 라우트
-@app.route('/view_profile/<string:user_id>')
-def view_profile(user_id):
-    cur = mysql.connection.cursor()
-    try:
-        cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
-        user = cur.fetchone()
-    except Exception as e:
-        flash(f"오류 발생: {str(e)}")
-    finally:
-        cur.close()
-    return render_template('view-profile.html', user=user)
-
-# 게시글 수정 라우트
-@app.route('/edit/<int:post_id>', methods=['GET', 'POST'])
-def edit_post(post_id):
-    cur = mysql.connection.cursor()
-    try:
-        if request.method == 'POST':
-            title = request.form['title']
-            body = request.form['body']
-            cur.execute("UPDATE topics SET title = %s, body = %s WHERE id = %s", (title, body, post_id))
-            mysql.connection.commit()
-            flash('게시글이 수정되었습니다.')
-            return redirect(url_for('index'))
-
-        cur.execute("SELECT * FROM topics WHERE id = %s", (post_id,))
-        post = cur.fetchone()
-    except Exception as e:
-        flash(f"오류 발생: {str(e)}")
-    finally:
-        cur.close()
-    return render_template('edit.html', post=post)
-
-# 게시글 삭제 라우트
-@app.route('/delete/<int:id>', methods=['POST'])
-def delete_post(id):
-    cur = mysql.connection.cursor()
-    try:
-        cur.execute("DELETE FROM topics WHERE id = %s", (id,))
+    if request.method == 'POST':
+        name = request.form['name']
+        school = request.form['school']
+        cur.execute("UPDATE users SET name = %s, school = %s WHERE user_id = %s", (name, school, user['user_id']))
         mysql.connection.commit()
-        flash('게시글이 삭제되었습니다.')
-    except Exception as e:
-        flash(f"오류 발생: {str(e)}")
-    finally:
-        cur.close()
-    return redirect(url_for('index'))
+        session['name'] = name  # 업데이트된 정보를 세션에도 저장
+        session['school'] = school
+        flash('프로필이 수정되었습니다.')
 
-# 파일 다운로드 라우트
-@app.route('/uploads/<filename>')
-def download_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# ID 찾기 라우트
-@app.route('/find_id', methods=['GET', 'POST'])
-def find_id():
-    if request.method == 'POST':
-        email = request.form['email']
-        cur = mysql.connection.cursor()
-        try:
-            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
-            user = cur.fetchone()
-            if user:
-                flash(f"ID는 {user['id']}입니다.")
-            else:
-                flash('해당 이메일로 등록된 사용자가 없습니다.')
-        except Exception as e:
-            flash(f"오류 발생: {str(e)}")
-        finally:
-            cur.close()
-    return render_template('find-id.html')
-
-# 비밀번호 찾기 라우트
-@app.route('/reset_password', methods=['GET', 'POST'])
-def reset_password():
-    if request.method == 'POST':
-        user_id = request.form['user_id']
-        new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        cur = mysql.connection.cursor()
-        try:
-            cur.execute("UPDATE users SET password = %s WHERE id = %s", (new_password, user_id))
-            mysql.connection.commit()
-            flash(f"새 비밀번호는 {new_password}입니다. 로그인 후 비밀번호를 변경해주세요.")
-        except Exception as e:
-            flash(f"오류 발생: {str(e)}")
-        finally:
-            cur.close()
-    return render_template('find-passwd.html')
+    cur.close()
+    return render_template('profile.html', user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)
